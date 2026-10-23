@@ -1,0 +1,27 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My Account — Neon Motion</title>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>:root{--a:#ff5a1f;--l:#ffd2b822;--d:#b39a8c}*{box-sizing:border-box}body{margin:0;background:#0b0605;color:#fff1e8;font-family:Inter,sans-serif;padding:24px}
+.w{max-width:720px;margin:40px auto}h1,h2{text-transform:uppercase;letter-spacing:.02em;font-family:'Big Shoulders Display',sans-serif}h1 em{color:var(--a)}a{color:var(--a);display:inline-block;padding:12px 0}
+input,button{width:100%;padding:13px;margin:6px 0;background:none;border:1px solid var(--l);color:inherit;font:inherit;border-radius:3px}
+button{background:#fff1e8;color:#0b0605;font-weight:600;cursor:pointer;text-transform:uppercase;font-size:12px;letter-spacing:.05em}button.g{background:none;color:inherit;border-color:#fff5;width:auto;padding:13px 16px}
+.c{border:1px solid var(--l);padding:20px;margin:16px 0}.r{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--l);gap:10px;font-size:14px}.m{color:var(--d);font-size:13px}#msg{color:#ff4d3d;min-height:20px}.ok{color:var(--a)!important}</style></head><body><div class="w"><a href="/">← Back to site</a><h1>Neon <em>Motion</em></h1><p id="msg"></p><div id="app"></div></div>
+<script>
+const $=i=>document.getElementById(i),P=new URLSearchParams(location.search),msg=(t,ok)=>{$('msg').textContent=t;$('msg').className=ok?'ok':''};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const api=async(u,m='GET',b)=>{const r=await fetch(u,{method:m,headers:m==='GET'?{}:{'Content-Type':'application/json'},body:m==='GET'?undefined:JSON.stringify(b||{})});const d=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(d.error||'Something went wrong.');e.status=r.status;throw e}return d};
+if(P.get('verified'))msg('Email verified — thank you!',1);if(P.get('paid'))msg('Payment received. Your membership will activate in a moment.',1);if(P.get('cancelled'))msg('Payment was cancelled.');
+function authView(){if(P.get('reset')){$('app').innerHTML='<h2>Choose a new password</h2><input id="np" type="password" placeholder="New password (8+ chars)"><button id="go">Save password</button>';
+ $('go').onclick=async()=>{try{await api('/api/auth/reset','POST',{token:P.get('reset'),password:$('np').value});location.href='/account.html'}catch(e){msg(e.message)}};return}
+ $('app').innerHTML='<h2>Log in or join</h2><input id="n" placeholder="Full name (sign up only)"><input id="e" type="email" placeholder="Email"><input id="ph" placeholder="Phone (optional)"><input id="p" type="password" placeholder="Password (8+ chars)"><button id="in">Log in</button><button id="up" class="g" style="margin-top:8px">Create account</button> <button id="fg" class="g">Forgot password</button>';
+ const go=async(path,b)=>{try{await api(path,'POST',b);const n=P.get('next');location.href=n==='membership'?'/#membership':n==='classes'?'/#classes':'/account.html'}catch(e){msg(e.message)}};
+ $('in').onclick=()=>go('/api/auth/login',{email:$('e').value,password:$('p').value});$('up').onclick=()=>go('/api/auth/signup',{name:$('n').value,email:$('e').value,phone:$('ph').value,password:$('p').value});
+ $('fg').onclick=async()=>{try{const r=await api('/api/auth/forgot','POST',{email:$('e').value});msg(r.message,1)}catch(e){msg(e.message)}}}
+async function dash(){const d=await api('/api/me/overview'),m=d.membership;
+ $('app').innerHTML=`<h2>Hi, ${esc(d.user.name)}</h2><div class="c"><b>Membership</b><p class="m">${m?`${esc(m.plan_name)} — active until ${esc(m.end_date)}`:'No active membership. '} ${m?'':'<a href="/#membership">Choose a plan</a>'}</p></div>
+ <div class="c"><b>Upcoming classes</b>${d.bookings.map(b=>`<div class="r"><span>${esc(b.name)} <span class="m">${esc(b.starts_at)} UTC · ${b.status}</span></span><button class="g" data-c="${b.class_id}">Cancel</button></div>`).join('')||'<p class="m">Nothing booked yet. <a href="/#classes">Browse classes</a></p>'}</div>
+ <div class="c"><b>Payments</b>${d.payments.map(p=>`<div class="r"><span>${p.amount} · ${p.status}</span><span class="m">${esc(p.created_at)} · ${esc(p.provider_ref)}</span></div>`).join('')||'<p class="m">No payments yet.</p>'}</div>
+ ${d.user.role==='admin'?'<p><a href="/admin.html">Open admin dashboard →</a></p>':''}<button class="g" id="lo">Log out</button>`;
+ $('lo').onclick=async()=>{await api('/api/auth/logout','POST',{});location.reload()};
+ document.querySelectorAll('[data-c]').forEach(b=>b.onclick=async()=>{try{const r=await api(`/api/classes/${b.dataset.c}/cancel`,'POST',{});msg(r.message,1);dash()}catch(e){msg(e.message)}})}
+api('/api/auth/me').then(dash).catch(authView);
+</script></body></html>

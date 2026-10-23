@@ -1,0 +1,141 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin — Neon Motion</title>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--a:#ff5a1f;--v:#ffa24a;--bg:#0b0605;--panel:#150a06;--l:#ffd2b822;--d:#b39a8c;--ink:#fff1e8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:14px}
+h1,h2{text-transform:uppercase;letter-spacing:.02em;font-family:'Big Shoulders Display',sans-serif;font-weight:600;margin:0}h1 em{font-style:italic;color:var(--a)}
+a{color:var(--a);text-decoration:none}
+header{display:flex;justify-content:space-between;align-items:center;padding:18px 28px;border-bottom:1px solid var(--l);position:sticky;top:0;background:var(--bg);z-index:5}
+.tabs{display:flex;gap:4px;padding:14px 28px;overflow-x:auto;border-bottom:1px solid var(--l)}
+.tab{padding:9px 16px;border-radius:100px;border:1px solid var(--l);color:var(--d);cursor:pointer;white-space:nowrap;font-size:12.5px;letter-spacing:.03em;text-transform:uppercase}
+.tab.on{background:var(--a);color:#0b0605;border-color:transparent;font-weight:600}
+main{padding:24px 28px 60px;max-width:1180px;margin:0 auto}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:28px}
+.kpi{border:1px solid var(--l);background:var(--panel);padding:16px}
+.kpi b{display:block;font-family:'Big Shoulders Display',sans-serif;font-size:26px;color:var(--a)}
+.kpi span{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--d)}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:32px}
+.chart{border:1px solid var(--l);background:var(--panel);padding:18px}
+.chart h3{font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--d);font-family:'Inter';margin-bottom:16px}
+.bars{display:flex;align-items:flex-end;gap:8px;height:110px}
+.bars .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.bars .fill{width:100%;background:linear-gradient(180deg,var(--a),var(--v));border-radius:2px 2px 0 0;min-height:2px}
+.bars .lbl{font-size:9.5px;color:var(--d);text-transform:uppercase}
+.card{border:1px solid var(--l);background:var(--panel);padding:20px;margin-bottom:20px}
+.card h2{font-size:17px;margin-bottom:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+input,select,textarea{width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--l);color:var(--ink);font:inherit;border-radius:3px;margin-bottom:8px}
+button{cursor:pointer;font:inherit}
+.btn{background:var(--ink);color:#0b0605;border:none;padding:10px 18px;border-radius:3px;font-weight:600;font-size:12.5px;text-transform:uppercase}
+.btn.ghost{background:none;color:var(--ink);border:1px solid var(--l);padding:8px 14px}
+.btn.danger{background:none;color:#ff4d3d;border:1px solid #ff4d3d55;padding:8px 14px}
+.t{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:10px 8px;border-top:1px solid var(--l);text-align:left;white-space:nowrap}
+th{color:var(--d);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.pill{font-size:10.5px;padding:3px 10px;border-radius:100px;border:1px solid var(--l);text-transform:uppercase;color:var(--d)}
+.pill.ok{color:#6fdc8c;border-color:#6fdc8c55}.pill.bad{color:#ff4d3d;border-color:#ff4d3d55}
+.msg{min-height:20px;color:#ff4d3d;font-size:13px}.msg.ok{color:var(--a)}
+.roster{font-size:12px;color:var(--d);margin-top:8px;padding-left:14px;border-left:2px solid var(--l)}
+.pager{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+
+.charts{grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))}
+input,select,textarea{min-width:0;font-size:16px}
+header{flex-wrap:wrap;gap:10px}header a{display:inline-block;padding:13px 6px}
+@media(max-width:860px){header{padding:10px 18px}main{padding:18px 18px 60px}.tabs{padding:12px 18px}.tab{padding:13px 18px}input,select,textarea{font-size:16px}.btn,.btn.ghost,.btn.danger{padding:12px 16px;min-height:44px}h1{font-size:24px}.card{padding:16px}}
+@media(max-width:560px){.grid2{grid-template-columns:1fr}#who{display:none}.kpis{grid-template-columns:1fr 1fr}.pager .btn{flex:1}}
+</style></head><body>
+<header><div><a href="/">← Site</a> · <a href="/account.html">Account</a></div><h1>Neon <em>Motion</em> — Admin</h1><div id="who" style="color:var(--d);font-size:13px"></div></header>
+<div class="tabs" id="tabs"></div>
+<main id="main"><p class="msg" id="gate"></p></main>
+<script>
+const $=i=>document.getElementById(i),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const api=async(u,m='GET',b)=>{const r=await fetch(u,{method:m,headers:m==='GET'?{}:{'Content-Type':'application/json'},body:m==='GET'?undefined:JSON.stringify(b||{})});const d=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(d.error||'Something went wrong.');e.status=r.status;throw e}return d};
+const money=c=>'$'+(c||0).toLocaleString();
+const TABS=[['overview','Overview'],['bookings','Bookings'],['classes','Classes'],['plans','Plans'],['trainers','Trainers'],['trials','Trials'],['tours','Tours'],['messages','Messages'],['members','Members']];
+let active='overview',memberQ='',memberPage=1;
+
+function bars(title,labels,vals,fmt=v=>v){const max=Math.max(1,...vals);
+ return `<div class="chart"><h3>${title}</h3><div class="bars">${vals.map((v,i)=>`<div class="col"><div class="fill" style="height:${Math.max(2,v/max*100)}%" title="${fmt(v)}"></div><div class="lbl">${labels[i]}</div></div>`).join('')}</div></div>`}
+
+async function renderOverview(){
+ const [s,a]=await Promise.all([api('/api/admin/stats'),api('/api/admin/analytics')]);
+ const L=Object.fromEntries([['totalMembers','Total members'],['activeMembers','Active members'],['newMembers30d','New (30d)'],['todaysBookings',"Today's bookings"],['monthlyRevenue','Revenue (mo)'],['pendingPayments','Pending payments'],['newTrials','New trial leads'],['pendingTours','Pending tours'],['newMessages','New messages']]);
+ const mLbl=a.months.map(m=>m.slice(5)+'/'+m.slice(2,4));
+ $('main').innerHTML=`<div class="kpis">${Object.entries(L).map(([k,v])=>`<div class="kpi"><b>${k==='monthlyRevenue'?money(s[k]):s[k]}</b><span>${v}</span></div>`).join('')}</div>
+  <div class="charts">${bars('Revenue — last 6 months',mLbl,a.revenue,money)}${bars('New members — last 6 months',mLbl,a.newMembers)}${bars('Bookings — last 6 months',mLbl,a.bookings)}</div>`}
+
+async function renderClasses(){
+ const [rows,trainers]=await Promise.all([api('/api/admin/classes-upcoming'),api('/api/admin/trainers')]);
+ $('main').innerHTML=`<div class="card"><h2>Add a class</h2><p class="msg" id="cmsg"></p>
+  <div class="grid2"><input id="cn" placeholder="Class name"><select id="ct"><option value="">No trainer assigned</option>${trainers.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('')}</select>
+  <input id="cd" type="datetime-local"><input id="cdur" type="number" placeholder="Duration (min)">
+  <input id="ccap" type="number" placeholder="Capacity"><input id="cdiff" placeholder="Difficulty (e.g. Intermediate)">
+  <input id="cloc" placeholder="Location" class="grid2"><input id="cdesc" placeholder="Short description"></div>
+  <button class="btn" id="cadd">Create class</button></div>
+  <div class="card"><h2>Upcoming classes</h2><div class="t"><table><tr><th>When</th><th>Class</th><th>Trainer</th><th>Spots</th><th>Status</th><th></th></tr>
+  ${rows.map(c=>`<tr><td>${esc(c.starts_at)}</td><td>${esc(c.name)}</td><td>${esc(c.trainer||'—')}</td><td>${c.booked}/${c.capacity}${c.waitlist?` +${c.waitlist} waitlist`:''}</td><td><span class="pill ${c.status==='scheduled'?'ok':'bad'}">${c.status}</span></td>
+   <td><button class="btn ghost" data-roster="${c.id}">Roster</button> ${c.status==='scheduled'?`<button class="btn danger" data-cancel="${c.id}">Cancel</button>`:''}</td></tr><tr id="r${c.id}" style="display:none"><td colspan="6"><div class="roster" id="rb${c.id}"></div></td></tr>`).join('')||'<tr><td colspan="6">No upcoming classes.</td></tr>'}</table></div></div>`;
+ $('cadd').onclick=async()=>{const m=$('cmsg');m.className='msg';m.textContent='Creating…';
+  try{await api('/api/admin/classes','POST',{name:$('cn').value,trainer_id:$('ct').value,starts_at:$('cd').value,duration_min:$('cdur').value,capacity:$('ccap').value,difficulty:$('cdiff').value,location:$('cloc').value,description:$('cdesc').value});renderClasses()}
+  catch(e){m.textContent=e.message}};
+ document.querySelectorAll('[data-roster]').forEach(b=>b.onclick=async()=>{const id=b.dataset.roster,row=$('r'+id);
+  if(row.style.display==='none'){const list=await api(`/api/admin/classes/${id}/roster`);$('rb'+id).innerHTML=list.map(p=>`${esc(p.name)} (${esc(p.email)}) — ${p.status}`).join('<br>')||'No one booked yet.';row.style.display=''}else row.style.display='none'});
+ document.querySelectorAll('[data-cancel]').forEach(b=>b.onclick=async()=>{if(!confirm('Cancel this class and notify everyone booked?'))return;
+  try{const r=await api(`/api/admin/classes/${b.dataset.cancel}/cancel`,'POST');alert(`Class cancelled. ${r.notified} member(s) notified.`);renderClasses()}catch(e){alert(e.message)}})}
+
+async function renderPlans(){
+ const rows=await api('/api/admin/plans-all');
+ $('main').innerHTML=`<div class="card"><h2>Add a plan</h2><p class="msg" id="pmsg"></p>
+  <div class="grid2"><input id="pn" placeholder="Plan name"><input id="pdesc" placeholder="Description">
+  <input id="pm" type="number" placeholder="Monthly price"><input id="py" type="number" placeholder="Yearly price">
+  <input id="pc" type="number" placeholder="Classes/month (blank = unlimited)"><input id="ppt" type="number" placeholder="PT sessions"></div>
+  <button class="btn" id="padd">Create plan</button></div>
+  <div class="card"><h2>All plans</h2><div class="t"><table><tr><th>Name</th><th>Monthly</th><th>Yearly</th><th>Classes</th><th>PT</th><th>Status</th><th></th></tr>
+  ${rows.map(p=>`<tr><td>${esc(p.name)}</td><td>${money(p.price_monthly)}</td><td>${money(p.price_yearly)}</td><td>${p.classes_per_month??'Unlimited'}</td><td>${p.pt_sessions}</td><td><span class="pill ${p.active?'ok':'bad'}">${p.active?'Active':'Hidden'}</span></td><td><button class="btn ghost" data-t="${p.id}" data-a="${p.active?0:1}">${p.active?'Hide':'Activate'}</button></td></tr>`).join('')}</table></div></div>`;
+ $('padd').onclick=async()=>{const m=$('pmsg');m.textContent='Creating…';
+  try{await api('/api/admin/plans','POST',{name:$('pn').value,description:$('pdesc').value,price_monthly:$('pm').value,price_yearly:$('py').value,classes_per_month:$('pc').value||null,pt_sessions:$('ppt').value});renderPlans()}catch(e){m.textContent=e.message}};
+ document.querySelectorAll('[data-t]').forEach(b=>b.onclick=async()=>{try{await api(`/api/admin/plans/${b.dataset.t}`,'PATCH',{active:+b.dataset.a});renderPlans()}catch(e){alert(e.message)}})}
+
+async function renderTrainers(){
+ const rows=await api('/api/admin/trainers');
+ $('main').innerHTML=`<div class="card"><h2>Add a trainer</h2><p class="msg" id="tmsg"></p>
+  <div class="grid2"><input id="tn" placeholder="Full name"><input id="te" type="email" placeholder="Email"></div>
+  <button class="btn" id="tadd">Create trainer account</button></div>
+  <div class="card"><h2>Trainers</h2><div class="t"><table><tr><th>Name</th><th>Email</th><th>Status</th><th></th></tr>
+  ${rows.map(t=>`<tr><td>${esc(t.name)}</td><td>${esc(t.email)}</td><td><span class="pill ${t.status==='active'?'ok':'bad'}">${t.status}</span></td><td><button class="btn ghost" data-tid="${t.id}" data-ts="${t.status==='active'?'suspended':'active'}">${t.status==='active'?'Suspend':'Activate'}</button></td></tr>`).join('')||'<tr><td colspan="4">No trainers yet.</td></tr>'}</table></div></div>`;
+ $('tadd').onclick=async()=>{const m=$('tmsg');m.textContent='Creating…';
+  try{const r=await api('/api/admin/trainers','POST',{name:$('tn').value,email:$('te').value});m.className='msg ok';m.textContent=`Created. Temporary password: ${r.tempPassword} (also emailed).`;renderTrainers()}catch(e){m.className='msg';m.textContent=e.message}};
+ document.querySelectorAll('[data-tid]').forEach(b=>b.onclick=async()=>{try{await api(`/api/admin/trainers/${b.dataset.tid}`,'PATCH',{status:b.dataset.ts});renderTrainers()}catch(e){alert(e.message)}})}
+
+async function renderBookings(){
+ const filter=arguments[0]||'';
+ const rows=await api('/api/admin/bookings'+(filter?`?status=${filter}`:''));
+ $('main').innerHTML=`<div class="card"><h2>All bookings</h2>
+  <select id="bf" style="max-width:200px"><option value="">All statuses</option>${['booked','waitlist','cancelled'].map(s=>`<option ${s===filter?'selected':''}>${s}</option>`).join('')}</select>
+  <div class="t"><table><tr><th>Class</th><th>When</th><th>Member</th><th>Status</th><th></th></tr>
+  ${rows.map(b=>`<tr><td>${esc(b.class_name)}</td><td>${esc(b.starts_at)}</td><td>${esc(b.member)}<br><span style="color:var(--d)">${esc(b.email)}</span></td><td><span class="pill ${b.status==='booked'?'ok':b.status==='cancelled'?'bad':''}">${b.status}</span></td><td>${b.status!=='cancelled'?`<button class="btn danger" data-bc="${b.id}">Cancel</button>`:''}</td></tr>`).join('')||'<tr><td colspan="5">No bookings.</td></tr>'}</table></div></div>`;
+ $('bf').onchange=e=>renderBookings(e.target.value);
+ document.querySelectorAll('[data-bc]').forEach(b=>b.onclick=async()=>{if(!confirm('Cancel this booking?'))return;try{await api(`/api/admin/bookings/${b.dataset.bc}/cancel`,'POST');renderBookings(filter)}catch(e){alert(e.message)}})}
+
+async function renderKind(kind){
+ const d=await api('/api/admin/list/'+kind);
+ $('main').innerHTML=`<div class="card"><h2>${kind[0].toUpperCase()+kind.slice(1)}</h2><div class="t"><table><tr><th>When</th><th>Name</th><th>Email</th><th>Phone</th><th>Details</th><th>Status</th></tr>
+  ${d.rows.map(r=>`<tr><td>${esc(r.created_at)}</td><td>${esc(r.name)}</td><td>${esc(r.email)}</td><td>${esc(r.phone)}</td><td>${esc(r.message||[r.pref_date,r.pref_time].filter(Boolean).join(' '))}</td><td><select data-id="${r.id}">${d.statuses.map(s=>`<option${s===r.status?' selected':''}>${s}</option>`).join('')}</select></td></tr>`).join('')||'<tr><td colspan="6">Nothing yet.</td></tr>'}</table></div></div>`;
+ document.querySelectorAll('select[data-id]').forEach(s=>s.onchange=async()=>{try{await api(`/api/admin/${kind}/${s.dataset.id}`,'PATCH',{status:s.value})}catch(e){alert(e.message)}})}
+
+async function renderMembers(){
+ const rows=await api(`/api/admin/list/members?q=${encodeURIComponent(memberQ)}&page=${memberPage}`);
+ $('main').innerHTML=`<div class="card"><h2>Members</h2><input id="mq" placeholder="Search name or email" value="${esc(memberQ)}" style="max-width:320px">
+  <div class="t"><table><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr>
+  ${rows.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.email)}</td><td>${r.role}</td><td><span class="pill ${r.status==='active'?'ok':'bad'}">${r.status}</span></td><td>${r.role!=='admin'?`<button class="btn ghost" data-id="${r.id}" data-s="${r.status==='active'?'suspended':'active'}">${r.status==='active'?'Suspend':'Activate'}</button>`:''}</td></tr>`).join('')||'<tr><td colspan="5">No members found.</td></tr>'}</table></div>
+  <div class="pager"><button class="btn ghost" id="mprev" ${memberPage<=1?'disabled':''}>← Prev</button><button class="btn ghost" id="mnext" ${rows.length<25?'disabled':''}>Next →</button></div></div>`;
+ $('mq').onchange=e=>{memberQ=e.target.value;memberPage=1;renderMembers()};
+ $('mprev').onclick=()=>{memberPage--;renderMembers()};$('mnext').onclick=()=>{memberPage++;renderMembers()}}
+
+const RENDER={overview:renderOverview,bookings:()=>renderBookings(),classes:renderClasses,plans:renderPlans,trainers:renderTrainers,trials:()=>renderKind('trials'),tours:()=>renderKind('tours'),messages:()=>renderKind('messages'),members:renderMembers};
+function go(tab){active=tab;document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.k===tab));RENDER[tab]().catch(e=>$('main').innerHTML=`<p class="msg">${esc(e.message)}</p>`)}
+$('tabs').innerHTML=TABS.map(([k,l])=>`<button class="tab" data-k="${k}">${l}</button>`).join('');
+$('tabs').onclick=e=>e.target.dataset.k&&go(e.target.dataset.k);
+api('/api/auth/me').then(u=>{if(u.role!=='admin')throw 0;$('who').textContent=u.name+' · '+u.email;go('overview')})
+ .catch(()=>{document.body.innerHTML='<p style="margin:60px auto;max-width:400px;text-align:center;font-family:Inter,sans-serif;color:#fff1e8">Admin access only. <a href="/account.html" style="color:#ff5a1f">Log in</a></p>'});
+</script></body></html>
